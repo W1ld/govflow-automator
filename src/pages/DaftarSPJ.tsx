@@ -128,7 +128,7 @@ const DaftarSPJ = () => {
   };
 
   const duplicateKegiatan = async (item: Kegiatan) => {
-    const { id, nomor_spj, created_at, updated_at, status, ...rest } = item;
+    const { id, nomor_spj, created_at, status, ...rest } = item;
     const { error } = await supabase.from("kegiatan").insert({
       ...rest,
       nomor_spj: "",
