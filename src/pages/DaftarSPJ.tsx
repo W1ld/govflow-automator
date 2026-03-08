@@ -16,8 +16,9 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Search, Filter, Eye, Trash2, CheckCircle, RotateCcw, Archive, FileText, FileDown } from "lucide-react";
+import { Search, Filter, Eye, Trash2, CheckCircle, RotateCcw, Archive, FileText, FileDown, Pencil } from "lucide-react";
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { SPJPreview } from "@/components/SPJPreview";
@@ -72,10 +73,11 @@ const statusBadge = (status: string) => {
 };
 
 const DaftarSPJ = () => {
+  const navigate = useNavigate();
   const [data, setData] = useState<Kegiatan[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState("active"); // "active" = not arsip
+  const [statusFilter, setStatusFilter] = useState("active");
   const [previewItem, setPreviewItem] = useState<Kegiatan | null>(null);
 
   const fetchData = async () => {
@@ -212,6 +214,11 @@ const DaftarSPJ = () => {
                             <Button variant="ghost" size="sm" title="Lihat Detail" onClick={() => setPreviewItem(item)}>
                               <Eye className="w-4 h-4" />
                             </Button>
+                            {(item.status === "draft" || item.status === "revisi") && (
+                              <Button variant="ghost" size="sm" title="Edit" onClick={() => navigate(`/kegiatan/${item.id}/edit`)}>
+                                <Pencil className="w-4 h-4 text-primary" />
+                              </Button>
+                            )}
                             {item.status === "draft" && (
                               <Button variant="ghost" size="sm" title="Verifikasi" onClick={() => updateStatus(item.id, "verified")}>
                                 <CheckCircle className="w-4 h-4 text-success" />
