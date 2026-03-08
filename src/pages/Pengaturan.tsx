@@ -144,9 +144,9 @@ const Pengaturan = () => {
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
-  const uploadLogo = async (file: File, kopId: string): Promise<string> => {
+  const uploadLogo = async (file: File, kopId: string, userId: string): Promise<string> => {
     const ext = file.name.split(".").pop();
-    const path = `${kopId}/logo-${Date.now()}.${ext}`;
+    const path = `${userId}/${kopId}/logo-${Date.now()}.${ext}`;
     const { error } = await supabase.storage.from("kop-logos").upload(path, file, { upsert: true });
     if (error) throw error;
     return getLogoPublicUrl(path);
@@ -195,7 +195,8 @@ const Pengaturan = () => {
         toast.success("Template KOP berhasil disimpan");
       }
     } catch (err: any) {
-      toast.error("Gagal simpan: " + err.message);
+      console.error("[Pengaturan] save kop error:", err);
+      toast.error("Gagal menyimpan. Silakan coba lagi.");
     }
 
     setSaving(false);
