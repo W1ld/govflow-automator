@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { useAuth } from "@/contexts/AuthContext";
 import { AppLayout } from "@/components/AppLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -65,6 +66,7 @@ const emptyPejabat: Omit<PejabatTemplate, "id" | "is_active"> = {
 };
 
 const Pengaturan = () => {
+  const { user } = useAuth();
   const [kopList, setKopList] = useState<KopTemplate[]>([]);
   const [pejabatList, setPejabatList] = useState<PejabatTemplate[]>([]);
   const [kopForm, setKopForm] = useState<KopFormData>(emptyKop);
