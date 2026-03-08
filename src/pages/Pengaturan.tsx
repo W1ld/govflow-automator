@@ -178,7 +178,7 @@ const Pengaturan = () => {
       if (editKopId) {
         // Handle logo upload for edit
         if (kopForm.logoFile) {
-          payload.logo_url = await uploadLogo(kopForm.logoFile, editKopId);
+          payload.logo_url = await uploadLogo(kopForm.logoFile, editKopId, user!.id);
         } else if (kopForm.logo_url === null) {
           payload.logo_url = null;
         }
@@ -191,7 +191,7 @@ const Pengaturan = () => {
         const { data, error } = await supabase.from("kop_templates").insert(payload as any).select("id").single();
         if (error) throw error;
         if (kopForm.logoFile && data) {
-          const logoUrl = await uploadLogo(kopForm.logoFile, data.id);
+          const logoUrl = await uploadLogo(kopForm.logoFile, data.id, user!.id);
           await supabase.from("kop_templates").update({ logo_url: logoUrl }).eq("id", data.id);
         }
         toast.success("Template KOP berhasil disimpan");
