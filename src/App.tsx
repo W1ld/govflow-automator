@@ -28,6 +28,7 @@ const App = () => (
             <Route path="/login" element={<Login />} />
             <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
             <Route path="/kegiatan/baru" element={<ProtectedRoute><InputKegiatan /></ProtectedRoute>} />
+            <Route path="/kegiatan/:id/edit" element={<ProtectedRoute><InputKegiatan /></ProtectedRoute>} />
             <Route path="/spj" element={<ProtectedRoute><DaftarSPJ /></ProtectedRoute>} />
             <Route path="/anggaran" element={<ProtectedRoute><Anggaran /></ProtectedRoute>} />
             <Route path="/pajak" element={<ProtectedRoute><KalkulatorPajak /></ProtectedRoute>} />
