@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { AppLayout } from "@/components/AppLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -10,9 +10,8 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
-import { Plus, Pencil, Trash2, Building2, Users, Save } from "lucide-react";
+import { Plus, Pencil, Trash2, Building2, Users, Save, Upload, X, Image } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -28,6 +27,7 @@ type KopTemplate = {
   fax: string | null;
   email: string | null;
   website: string | null;
+  logo_url: string | null;
   is_active: boolean;
 };
 
@@ -40,7 +40,9 @@ type PejabatTemplate = {
   is_active: boolean;
 };
 
-const emptyKop: Omit<KopTemplate, "id" | "is_active"> = {
+type KopFormData = Omit<KopTemplate, "id" | "is_active"> & { logoFile?: File | null };
+
+const emptyKop: KopFormData = {
   nama_instansi: "",
   nama_unit_kerja: "",
   alamat: "",
@@ -51,6 +53,8 @@ const emptyKop: Omit<KopTemplate, "id" | "is_active"> = {
   fax: "",
   email: "",
   website: "",
+  logo_url: null,
+  logoFile: null,
 };
 
 const emptyPejabat: Omit<PejabatTemplate, "id" | "is_active"> = {
@@ -63,13 +67,15 @@ const emptyPejabat: Omit<PejabatTemplate, "id" | "is_active"> = {
 const Pengaturan = () => {
   const [kopList, setKopList] = useState<KopTemplate[]>([]);
   const [pejabatList, setPejabatList] = useState<PejabatTemplate[]>([]);
-  const [kopForm, setKopForm] = useState(emptyKop);
+  const [kopForm, setKopForm] = useState<KopFormData>(emptyKop);
   const [editKopId, setEditKopId] = useState<string | null>(null);
   const [kopDialogOpen, setKopDialogOpen] = useState(false);
   const [pejabatForm, setPejabatForm] = useState(emptyPejabat);
   const [editPejabatId, setEditPejabatId] = useState<string | null>(null);
   const [pejabatDialogOpen, setPejabatDialogOpen] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [logoPreview, setLogoPreview] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     fetchAll();
@@ -84,10 +90,16 @@ const Pengaturan = () => {
     if (pejabatRes.data) setPejabatList(pejabatRes.data);
   };
 
+  const getLogoPublicUrl = (path: string) => {
+    const { data } = supabase.storage.from("kop-logos").getPublicUrl(path);
+    return data.publicUrl;
+  };
+
   // KOP CRUD
   const openKopCreate = () => {
     setKopForm(emptyKop);
     setEditKopId(null);
+    setLogoPreview(null);
     setKopDialogOpen(true);
   };
 
@@ -103,9 +115,41 @@ const Pengaturan = () => {
       fax: kop.fax || "",
       email: kop.email || "",
       website: kop.website || "",
+      logo_url: kop.logo_url,
+      logoFile: null,
     });
     setEditKopId(kop.id);
+    setLogoPreview(kop.logo_url || null);
     setKopDialogOpen(true);
+  };
+
+  const handleLogoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      toast.error("File harus berupa gambar (PNG, JPG, dll)");
+      return;
+    }
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error("Ukuran file maksimal 2MB");
+      return;
+    }
+    setKopForm({ ...kopForm, logoFile: file });
+    setLogoPreview(URL.createObjectURL(file));
+  };
+
+  const removeLogo = () => {
+    setKopForm({ ...kopForm, logoFile: null, logo_url: null });
+    setLogoPreview(null);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
+  const uploadLogo = async (file: File, kopId: string): Promise<string> => {
+    const ext = file.name.split(".").pop();
+    const path = `${kopId}/logo-${Date.now()}.${ext}`;
+    const { error } = await supabase.storage.from("kop-logos").upload(path, file, { upsert: true });
+    if (error) throw error;
+    return getLogoPublicUrl(path);
   };
 
   const saveKop = async () => {
@@ -114,28 +158,46 @@ const Pengaturan = () => {
       return;
     }
     setSaving(true);
-    const payload = {
-      nama_instansi: kopForm.nama_instansi,
-      nama_unit_kerja: kopForm.nama_unit_kerja || null,
-      alamat: kopForm.alamat || null,
-      kota: kopForm.kota || null,
-      provinsi: kopForm.provinsi || null,
-      kode_pos: kopForm.kode_pos || null,
-      telepon: kopForm.telepon || null,
-      fax: kopForm.fax || null,
-      email: kopForm.email || null,
-      website: kopForm.website || null,
-    };
 
-    if (editKopId) {
-      const { error } = await supabase.from("kop_templates").update(payload).eq("id", editKopId);
-      if (error) toast.error("Gagal update: " + error.message);
-      else toast.success("Template KOP berhasil diupdate");
-    } else {
-      const { error } = await supabase.from("kop_templates").insert(payload);
-      if (error) toast.error("Gagal simpan: " + error.message);
-      else toast.success("Template KOP berhasil disimpan");
+    try {
+      const payload: Record<string, any> = {
+        nama_instansi: kopForm.nama_instansi,
+        nama_unit_kerja: kopForm.nama_unit_kerja || null,
+        alamat: kopForm.alamat || null,
+        kota: kopForm.kota || null,
+        provinsi: kopForm.provinsi || null,
+        kode_pos: kopForm.kode_pos || null,
+        telepon: kopForm.telepon || null,
+        fax: kopForm.fax || null,
+        email: kopForm.email || null,
+        website: kopForm.website || null,
+      };
+
+      if (editKopId) {
+        // Handle logo upload for edit
+        if (kopForm.logoFile) {
+          payload.logo_url = await uploadLogo(kopForm.logoFile, editKopId);
+        } else if (kopForm.logo_url === null) {
+          payload.logo_url = null;
+        }
+        const { error } = await supabase.from("kop_templates").update(payload).eq("id", editKopId);
+        if (error) throw error;
+        toast.success("Template KOP berhasil diupdate");
+      } else {
+        // Insert first, then upload logo
+        payload.logo_url = null;
+        const { data, error } = await supabase.from("kop_templates").insert(payload as any).select("id").single();
+        if (error) throw error;
+        if (kopForm.logoFile && data) {
+          const logoUrl = await uploadLogo(kopForm.logoFile, data.id);
+          await supabase.from("kop_templates").update({ logo_url: logoUrl }).eq("id", data.id);
+        }
+        toast.success("Template KOP berhasil disimpan");
+      }
+    } catch (err: any) {
+      toast.error("Gagal simpan: " + err.message);
     }
+
     setSaving(false);
     setKopDialogOpen(false);
     fetchAll();
@@ -232,15 +294,24 @@ const Pengaturan = () => {
               <div className="space-y-3">
                 {kopList.map((kop) => (
                   <div key={kop.id} className="flex items-center justify-between p-3 border rounded-md bg-muted/20">
-                    <div>
-                      <p className="font-medium text-sm">{kop.nama_instansi}</p>
-                      {kop.nama_unit_kerja && (
-                        <p className="text-xs text-muted-foreground">{kop.nama_unit_kerja}</p>
+                    <div className="flex items-center gap-3">
+                      {kop.logo_url ? (
+                        <img src={kop.logo_url} alt="Logo" className="w-10 h-10 object-contain rounded" />
+                      ) : (
+                        <div className="w-10 h-10 rounded bg-muted flex items-center justify-center">
+                          <Image className="w-4 h-4 text-muted-foreground" />
+                        </div>
                       )}
-                      <p className="text-xs text-muted-foreground mt-0.5">
-                        {[kop.kota, kop.provinsi].filter(Boolean).join(", ")}
-                        {kop.telepon && ` • ${kop.telepon}`}
-                      </p>
+                      <div>
+                        <p className="font-medium text-sm">{kop.nama_instansi}</p>
+                        {kop.nama_unit_kerja && (
+                          <p className="text-xs text-muted-foreground">{kop.nama_unit_kerja}</p>
+                        )}
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                          {[kop.kota, kop.provinsi].filter(Boolean).join(", ")}
+                          {kop.telepon && ` • ${kop.telepon}`}
+                        </p>
+                      </div>
                     </div>
                     <div className="flex gap-1">
                       <Button variant="ghost" size="sm" onClick={() => openKopEdit(kop)}>
@@ -310,6 +381,54 @@ const Pengaturan = () => {
             <DialogTitle>{editKopId ? "Edit Template KOP" : "Tambah Template KOP"}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
+            {/* Logo Upload */}
+            <div className="space-y-1.5">
+              <Label className="text-xs font-medium">Logo Instansi</Label>
+              <div className="flex items-center gap-3">
+                {logoPreview ? (
+                  <div className="relative">
+                    <img src={logoPreview} alt="Logo preview" className="w-16 h-16 object-contain border rounded-md p-1" />
+                    <button
+                      type="button"
+                      onClick={removeLogo}
+                      className="absolute -top-2 -right-2 w-5 h-5 bg-destructive text-destructive-foreground rounded-full flex items-center justify-center"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </div>
+                ) : (
+                  <div
+                    className="w-16 h-16 border-2 border-dashed rounded-md flex items-center justify-center cursor-pointer hover:border-primary/50 transition-colors"
+                    onClick={() => fileInputRef.current?.click()}
+                  >
+                    <Upload className="w-5 h-5 text-muted-foreground" />
+                  </div>
+                )}
+                <div className="flex-1">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="gap-1"
+                  >
+                    <Upload className="w-3 h-3" />
+                    {logoPreview ? "Ganti Logo" : "Upload Logo"}
+                  </Button>
+                  <p className="text-xs text-muted-foreground mt-1">PNG, JPG. Maks 2MB.</p>
+                </div>
+              </div>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={handleLogoSelect}
+              />
+            </div>
+
+            <Separator />
+
             <div className="space-y-1.5">
               <Label className="text-xs font-medium">Nama Instansi *</Label>
               <Input value={kopForm.nama_instansi} onChange={(e) => setKopForm({ ...kopForm, nama_instansi: e.target.value })} placeholder="Contoh: KEMENTERIAN KEUANGAN RI" />

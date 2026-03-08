@@ -11,7 +11,7 @@ import {
   WidthType,
   AlignmentType,
   BorderStyle,
-  HeadingLevel,
+  ImageRun,
 } from "docx";
 import { saveAs } from "file-saver";
 import { supabase } from "@/integrations/supabase/client";
@@ -27,6 +27,7 @@ type KopTemplate = {
   fax: string | null;
   email: string | null;
   website: string | null;
+  logo_url: string | null;
 };
 
 type Kegiatan = {
@@ -73,6 +74,30 @@ async function fetchKop(kopId: string | null): Promise<KopTemplate | null> {
   return data;
 }
 
+async function fetchImageAsBase64(url: string): Promise<string | null> {
+  try {
+    const response = await fetch(url);
+    const blob = await response.blob();
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result as string);
+      reader.onerror = () => resolve(null);
+      reader.readAsDataURL(blob);
+    });
+  } catch {
+    return null;
+  }
+}
+
+async function fetchImageAsArrayBuffer(url: string): Promise<ArrayBuffer | null> {
+  try {
+    const response = await fetch(url);
+    return await response.arrayBuffer();
+  } catch {
+    return null;
+  }
+}
+
 // ==================== PDF EXPORT ====================
 export async function exportToPDF(kegiatan: Kegiatan) {
   const kop = await fetchKop(kegiatan.kop_template_id);
@@ -82,6 +107,23 @@ export async function exportToPDF(kegiatan: Kegiatan) {
 
   // KOP Header
   if (kop) {
+    let logoWidth = 0;
+
+    // Add logo if available
+    if (kop.logo_url) {
+      const logoBase64 = await fetchImageAsBase64(kop.logo_url);
+      if (logoBase64) {
+        try {
+          const logoSize = 15; // mm
+          const logoX = 15;
+          doc.addImage(logoBase64, "PNG", logoX, y - 3, logoSize, logoSize);
+          logoWidth = logoSize + 5;
+        } catch {
+          // Logo failed to load, continue without it
+        }
+      }
+    }
+
     doc.setFontSize(14);
     doc.setFont("helvetica", "bold");
     doc.text(kop.nama_instansi, pageWidth / 2, y, { align: "center" });
@@ -91,6 +133,10 @@ export async function exportToPDF(kegiatan: Kegiatan) {
       doc.setFontSize(12);
       doc.text(kop.nama_unit_kerja.toUpperCase(), pageWidth / 2, y, { align: "center" });
       y += 5;
+    }
+
+    if (logoWidth > 0) {
+      y = Math.max(y, 15 + 15); // ensure y is past the logo
     }
 
     doc.setFontSize(8);
@@ -187,7 +233,6 @@ export async function exportToPDF(kegiatan: Kegiatan) {
     columnStyles: { 1: { halign: "right" } },
     margin: { left: 15, right: 15 },
     didParseCell: (data) => {
-      // Bold last row
       if (data.row.index === finRows.length - 1) {
         data.cell.styles.fontStyle = "bold";
       }
@@ -196,7 +241,6 @@ export async function exportToPDF(kegiatan: Kegiatan) {
 
   y = (doc as any).lastAutoTable.finalY + 20;
 
-  // Check if signatures fit, otherwise add page
   if (y > 240) {
     doc.addPage();
     y = 30;
@@ -229,10 +273,30 @@ export async function exportToPDF(kegiatan: Kegiatan) {
 export async function exportToDOCX(kegiatan: Kegiatan) {
   const kop = await fetchKop(kegiatan.kop_template_id);
 
-  const children: Paragraph[] = [];
+  const children: (Paragraph | Table)[] = [];
 
-  // KOP Header
+  // KOP Header with logo
   if (kop) {
+    // Logo + institution name
+    if (kop.logo_url) {
+      const logoBuffer = await fetchImageAsArrayBuffer(kop.logo_url);
+      if (logoBuffer) {
+        children.push(
+          new Paragraph({
+            alignment: AlignmentType.CENTER,
+            spacing: { after: 50 },
+            children: [
+              new ImageRun({
+                data: logoBuffer,
+                transformation: { width: 60, height: 60 },
+                type: "png",
+              }),
+            ],
+          })
+        );
+      }
+    }
+
     children.push(
       new Paragraph({
         alignment: AlignmentType.CENTER,
@@ -273,7 +337,6 @@ export async function exportToDOCX(kegiatan: Kegiatan) {
       );
     }
 
-    // Separator line
     children.push(
       new Paragraph({
         border: { bottom: { style: BorderStyle.SINGLE, size: 6, color: "000000" } },
@@ -333,10 +396,9 @@ export async function exportToDOCX(kegiatan: Kegiatan) {
   });
 
   children.push(new Paragraph({ children: [] }));
-  // We'll add the table separately via sections
 
   // Uraian
-  const afterDetails: Paragraph[] = [];
+  const afterDetails: (Paragraph | Table)[] = [];
   if (kegiatan.uraian) {
     afterDetails.push(
       new Paragraph({
@@ -407,6 +469,14 @@ export async function exportToDOCX(kegiatan: Kegiatan) {
 
   const sigParagraphs: Paragraph[] = [new Paragraph({ spacing: { before: 600 }, children: [] })];
 
+  const allSections: (Paragraph | Table)[] = [
+    ...children,
+    detailTable,
+    ...afterDetails,
+    finTable,
+    ...sigParagraphs,
+  ];
+
   if (signers.length > 0) {
     const sigTable = new Table({
       width: { size: 100, type: WidthType.PERCENTAGE },
@@ -430,39 +500,11 @@ export async function exportToDOCX(kegiatan: Kegiatan) {
         }),
       ],
     });
-
-    const doc2 = new Document({
-      sections: [
-        {
-          children: [
-            ...children,
-            detailTable,
-            ...afterDetails,
-            finTable,
-            ...sigParagraphs,
-            sigTable,
-          ],
-        },
-      ],
-    });
-
-    const blob = await Packer.toBlob(doc2);
-    saveAs(blob, `SPJ_${kegiatan.nomor_spj.replace(/\//g, "-")}.docx`);
-    return;
+    allSections.push(sigTable);
   }
 
   const doc2 = new Document({
-    sections: [
-      {
-        children: [
-          ...children,
-          detailTable,
-          ...afterDetails,
-          finTable,
-          ...sigParagraphs,
-        ],
-      },
-    ],
+    sections: [{ children: allSections }],
   });
 
   const blob = await Packer.toBlob(doc2);

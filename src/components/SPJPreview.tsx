@@ -13,6 +13,7 @@ type KopTemplate = {
   fax: string | null;
   email: string | null;
   website: string | null;
+  logo_url: string | null;
 };
 
 type Kegiatan = {
@@ -74,10 +75,17 @@ export function SPJPreview({ kegiatan }: { kegiatan: Kegiatan }) {
       {/* KOP Header */}
       {kop && (
         <div className="text-center border-b-2 border-foreground pb-4 space-y-1">
-          <h2 className="text-lg font-bold uppercase tracking-wider">{kop.nama_instansi}</h2>
-          {kop.nama_unit_kerja && (
-            <p className="text-base font-semibold uppercase">{kop.nama_unit_kerja}</p>
-          )}
+          <div className="flex items-center justify-center gap-4">
+            {kop.logo_url && (
+              <img src={kop.logo_url} alt="Logo" className="w-14 h-14 object-contain" />
+            )}
+            <div>
+              <h2 className="text-lg font-bold uppercase tracking-wider">{kop.nama_instansi}</h2>
+              {kop.nama_unit_kerja && (
+                <p className="text-base font-semibold uppercase">{kop.nama_unit_kerja}</p>
+              )}
+            </div>
+          </div>
           {kop.alamat && (
             <p className="text-xs text-muted-foreground">
               {kop.alamat}
