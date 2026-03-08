@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useAuth } from "@/contexts/AuthContext";
+import { getLogoSignedUrl } from "@/lib/storage-utils";
 import { AppLayout } from "@/components/AppLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -106,14 +107,6 @@ const Pengaturan = () => {
     if (pejabatRes.data) setPejabatList(pejabatRes.data);
   };
 
-  const getLogoSignedUrl = async (path: string): Promise<string | null> => {
-    const { data, error } = await supabase.storage.from("kop-logos").createSignedUrl(path, 3600);
-    if (error) {
-      console.error("[Pengaturan] signed URL error:", error);
-      return null;
-    }
-    return data.signedUrl;
-  };
 
   // KOP CRUD
   const openKopCreate = () => {
