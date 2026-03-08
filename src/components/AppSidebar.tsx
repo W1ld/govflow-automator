@@ -93,7 +93,10 @@ export function AppSidebar() {
       {/* User & Logout */}
       <div className="border-t border-sidebar-border px-2 py-2">
         {!collapsed && user && (
-          <p className="text-[10px] text-sidebar-muted px-3 mb-1 truncate">{user.email}</p>
+          <div className="px-3 py-2 mb-1 rounded-md bg-sidebar-accent/40">
+            <p className="text-[10px] text-sidebar-muted uppercase tracking-wider mb-0.5">Masuk sebagai</p>
+            <p className="text-xs font-medium text-sidebar-accent-foreground truncate">{user.email}</p>
+          </div>
         )}
         <button
           onClick={handleLogout}
