@@ -1,10 +1,11 @@
 import { useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard,
   FileText,
   PlusCircle,
   Wallet,
+  LogOut,
   Calculator,
   Users,
   Archive,
@@ -14,6 +15,7 @@ import {
   Shield,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/contexts/AuthContext";
 
 const navItems = [
   { icon: LayoutDashboard, label: "Dashboard", path: "/" },
@@ -29,6 +31,13 @@ const navItems = [
 export function AppSidebar() {
   const [collapsed, setCollapsed] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
+  const { user, signOut } = useAuth();
+
+  const handleLogout = async () => {
+    await signOut();
+    navigate("/login", { replace: true });
+  };
 
   return (
     <aside
@@ -80,6 +89,23 @@ export function AppSidebar() {
           );
         })}
       </nav>
+
+      {/* User & Logout */}
+      <div className="border-t border-sidebar-border px-2 py-2">
+        {!collapsed && user && (
+          <p className="text-[10px] text-sidebar-muted px-3 mb-1 truncate">{user.email}</p>
+        )}
+        <button
+          onClick={handleLogout}
+          className={cn(
+            "flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium w-full text-sidebar-foreground hover:bg-sidebar-accent/50 transition-colors",
+          )}
+          title={collapsed ? "Keluar" : undefined}
+        >
+          <LogOut className="w-4 h-4 shrink-0" />
+          {!collapsed && <span>Keluar</span>}
+        </button>
+      </div>
 
       {/* Collapse Toggle */}
       <button
