@@ -16,11 +16,12 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Search, Filter, Eye, Trash2, CheckCircle, RotateCcw, Archive } from "lucide-react";
+import { Search, Filter, Eye, Trash2, CheckCircle, RotateCcw, Archive, FileText, FileDown } from "lucide-react";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { SPJPreview } from "@/components/SPJPreview";
+import { exportToPDF, exportToDOCX } from "@/lib/export-spj";
 
 type Kegiatan = {
   id: string;
@@ -249,7 +250,31 @@ const DaftarSPJ = () => {
           <DialogHeader>
             <DialogTitle>Preview SPJ — {previewItem?.nomor_spj}</DialogTitle>
           </DialogHeader>
-          {previewItem && <SPJPreview kegiatan={previewItem} />}
+          {previewItem && (
+            <>
+              <div className="flex gap-2 mb-4">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => exportToPDF(previewItem)}
+                  className="gap-2"
+                >
+                  <FileDown className="w-4 h-4" />
+                  Export PDF
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => exportToDOCX(previewItem)}
+                  className="gap-2"
+                >
+                  <FileText className="w-4 h-4" />
+                  Export DOCX
+                </Button>
+              </div>
+              <SPJPreview kegiatan={previewItem} />
+            </>
+          )}
         </DialogContent>
       </Dialog>
     </AppLayout>
