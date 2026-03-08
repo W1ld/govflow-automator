@@ -92,9 +92,13 @@ const Pengaturan = () => {
     if (pejabatRes.data) setPejabatList(pejabatRes.data);
   };
 
-  const getLogoPublicUrl = (path: string) => {
-    const { data } = supabase.storage.from("kop-logos").getPublicUrl(path);
-    return data.publicUrl;
+  const getLogoSignedUrl = async (path: string): Promise<string | null> => {
+    const { data, error } = await supabase.storage.from("kop-logos").createSignedUrl(path, 3600);
+    if (error) {
+      console.error("[Pengaturan] signed URL error:", error);
+      return null;
+    }
+    return data.signedUrl;
   };
 
   // KOP CRUD
@@ -151,7 +155,8 @@ const Pengaturan = () => {
     const path = `${userId}/${kopId}/logo-${Date.now()}.${ext}`;
     const { error } = await supabase.storage.from("kop-logos").upload(path, file, { upsert: true });
     if (error) throw error;
-    return getLogoPublicUrl(path);
+    // Store the storage path, not a URL
+    return path;
   };
 
   const saveKop = async () => {
