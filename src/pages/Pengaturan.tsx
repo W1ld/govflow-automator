@@ -186,7 +186,7 @@ const Pengaturan = () => {
       } else {
         // Insert first, then upload logo
         payload.logo_url = null;
-        const { data, error } = await supabase.from("kop_templates").insert(payload).select("id").single();
+        const { data, error } = await supabase.from("kop_templates").insert(payload as any).select("id").single();
         if (error) throw error;
         if (kopForm.logoFile && data) {
           const logoUrl = await uploadLogo(kopForm.logoFile, data.id);
