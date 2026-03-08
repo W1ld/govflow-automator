@@ -88,7 +88,20 @@ const Pengaturan = () => {
       supabase.from("kop_templates").select("*").order("created_at"),
       supabase.from("pejabat_templates").select("*").order("created_at"),
     ]);
-    if (kopRes.data) setKopList(kopRes.data);
+    if (kopRes.data) {
+      setKopList(kopRes.data);
+      // Resolve signed URLs for logos
+      const urls: Record<string, string> = {};
+      await Promise.all(
+        kopRes.data
+          .filter((k) => k.logo_url)
+          .map(async (k) => {
+            const url = await getLogoSignedUrl(k.logo_url!);
+            if (url) urls[k.id] = url;
+          })
+      );
+      setLogoUrls(urls);
+    }
     if (pejabatRes.data) setPejabatList(pejabatRes.data);
   };
 
@@ -125,7 +138,7 @@ const Pengaturan = () => {
       logoFile: null,
     });
     setEditKopId(kop.id);
-    setLogoPreview(kop.logo_url || null);
+    setLogoPreview(logoUrls[kop.id] || null);
     setKopDialogOpen(true);
   };
 
@@ -303,8 +316,8 @@ const Pengaturan = () => {
                 {kopList.map((kop) => (
                   <div key={kop.id} className="flex items-center justify-between p-3 border rounded-md bg-muted/20">
                     <div className="flex items-center gap-3">
-                      {kop.logo_url ? (
-                        <img src={kop.logo_url} alt="Logo" className="w-10 h-10 object-contain rounded" />
+                      {logoUrls[kop.id] ? (
+                        <img src={logoUrls[kop.id]} alt="Logo" className="w-10 h-10 object-contain rounded" />
                       ) : (
                         <div className="w-10 h-10 rounded bg-muted flex items-center justify-center">
                           <Image className="w-4 h-4 text-muted-foreground" />
