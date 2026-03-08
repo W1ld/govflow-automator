@@ -14,7 +14,191 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      kegiatan: {
+        Row: {
+          bendahara_nama: string | null
+          bendahara_nip: string | null
+          catatan_revisi: string | null
+          created_at: string
+          id: string
+          jenis_belanja: string
+          kode_mak: string | null
+          kop_template_id: string | null
+          lokasi: string | null
+          nama_kegiatan: string
+          nilai_bruto: number
+          nilai_netto: number
+          nomor_spj: string
+          pph_jenis: string | null
+          pph_nominal: number
+          pph_rate: number
+          ppk_nama: string | null
+          ppk_nip: string | null
+          ppn_nominal: number
+          ppn_rate: number
+          pptk_nama: string | null
+          pptk_nip: string | null
+          status: string
+          tahun_anggaran: number
+          tanggal_kegiatan: string
+          updated_at: string
+          uraian: string | null
+        }
+        Insert: {
+          bendahara_nama?: string | null
+          bendahara_nip?: string | null
+          catatan_revisi?: string | null
+          created_at?: string
+          id?: string
+          jenis_belanja: string
+          kode_mak?: string | null
+          kop_template_id?: string | null
+          lokasi?: string | null
+          nama_kegiatan: string
+          nilai_bruto?: number
+          nilai_netto?: number
+          nomor_spj: string
+          pph_jenis?: string | null
+          pph_nominal?: number
+          pph_rate?: number
+          ppk_nama?: string | null
+          ppk_nip?: string | null
+          ppn_nominal?: number
+          ppn_rate?: number
+          pptk_nama?: string | null
+          pptk_nip?: string | null
+          status?: string
+          tahun_anggaran?: number
+          tanggal_kegiatan: string
+          updated_at?: string
+          uraian?: string | null
+        }
+        Update: {
+          bendahara_nama?: string | null
+          bendahara_nip?: string | null
+          catatan_revisi?: string | null
+          created_at?: string
+          id?: string
+          jenis_belanja?: string
+          kode_mak?: string | null
+          kop_template_id?: string | null
+          lokasi?: string | null
+          nama_kegiatan?: string
+          nilai_bruto?: number
+          nilai_netto?: number
+          nomor_spj?: string
+          pph_jenis?: string | null
+          pph_nominal?: number
+          pph_rate?: number
+          ppk_nama?: string | null
+          ppk_nip?: string | null
+          ppn_nominal?: number
+          ppn_rate?: number
+          pptk_nama?: string | null
+          pptk_nip?: string | null
+          status?: string
+          tahun_anggaran?: number
+          tanggal_kegiatan?: string
+          updated_at?: string
+          uraian?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "kegiatan_kop_template_id_fkey"
+            columns: ["kop_template_id"]
+            isOneToOne: false
+            referencedRelation: "kop_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      kop_templates: {
+        Row: {
+          alamat: string | null
+          created_at: string
+          email: string | null
+          fax: string | null
+          id: string
+          is_active: boolean
+          kode_pos: string | null
+          kota: string | null
+          logo_url: string | null
+          nama_instansi: string
+          nama_unit_kerja: string | null
+          provinsi: string | null
+          telepon: string | null
+          updated_at: string
+          website: string | null
+        }
+        Insert: {
+          alamat?: string | null
+          created_at?: string
+          email?: string | null
+          fax?: string | null
+          id?: string
+          is_active?: boolean
+          kode_pos?: string | null
+          kota?: string | null
+          logo_url?: string | null
+          nama_instansi: string
+          nama_unit_kerja?: string | null
+          provinsi?: string | null
+          telepon?: string | null
+          updated_at?: string
+          website?: string | null
+        }
+        Update: {
+          alamat?: string | null
+          created_at?: string
+          email?: string | null
+          fax?: string | null
+          id?: string
+          is_active?: boolean
+          kode_pos?: string | null
+          kota?: string | null
+          logo_url?: string | null
+          nama_instansi?: string
+          nama_unit_kerja?: string | null
+          provinsi?: string | null
+          telepon?: string | null
+          updated_at?: string
+          website?: string | null
+        }
+        Relationships: []
+      }
+      pejabat_templates: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean
+          jabatan: string
+          nama: string
+          nip: string | null
+          pangkat_golongan: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          jabatan: string
+          nama: string
+          nip?: string | null
+          pangkat_golongan?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          jabatan?: string
+          nama?: string
+          nip?: string | null
+          pangkat_golongan?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
