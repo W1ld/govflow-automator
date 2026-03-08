@@ -8,6 +8,8 @@ import InputKegiatan from "./pages/InputKegiatan";
 import DaftarSPJ from "./pages/DaftarSPJ";
 import Anggaran from "./pages/Anggaran";
 import KalkulatorPajak from "./pages/KalkulatorPajak";
+import ArsipDokumen from "./pages/ArsipDokumen";
+import Pengaturan from "./pages/Pengaturan";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -24,6 +26,8 @@ const App = () => (
           <Route path="/spj" element={<DaftarSPJ />} />
           <Route path="/anggaran" element={<Anggaran />} />
           <Route path="/pajak" element={<KalkulatorPajak />} />
+          <Route path="/arsip" element={<ArsipDokumen />} />
+          <Route path="/pengaturan" element={<Pengaturan />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
