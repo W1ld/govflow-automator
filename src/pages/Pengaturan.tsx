@@ -68,6 +68,7 @@ const emptyPejabat: Omit<PejabatTemplate, "id" | "is_active"> = {
 const Pengaturan = () => {
   const { user } = useAuth();
   const [kopList, setKopList] = useState<KopTemplate[]>([]);
+  const [logoUrls, setLogoUrls] = useState<Record<string, string>>({});
   const [pejabatList, setPejabatList] = useState<PejabatTemplate[]>([]);
   const [kopForm, setKopForm] = useState<KopFormData>(emptyKop);
   const [editKopId, setEditKopId] = useState<string | null>(null);
