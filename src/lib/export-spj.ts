@@ -15,6 +15,7 @@ import {
 } from "docx";
 import { saveAs } from "file-saver";
 import { supabase } from "@/integrations/supabase/client";
+import { getLogoSignedUrl } from "@/lib/storage-utils";
 
 type KopTemplate = {
   nama_instansi: string;
@@ -111,7 +112,8 @@ export async function exportToPDF(kegiatan: Kegiatan) {
 
     // Add logo if available
     if (kop.logo_url) {
-      const logoBase64 = await fetchImageAsBase64(kop.logo_url);
+      const logoUrl = await getLogoSignedUrl(kop.logo_url);
+      const logoBase64 = logoUrl ? await fetchImageAsBase64(logoUrl) : null;
       if (logoBase64) {
         try {
           const logoSize = 15; // mm
@@ -279,7 +281,8 @@ export async function exportToDOCX(kegiatan: Kegiatan) {
   if (kop) {
     // Logo + institution name
     if (kop.logo_url) {
-      const logoBuffer = await fetchImageAsArrayBuffer(kop.logo_url);
+      const logoUrl = await getLogoSignedUrl(kop.logo_url);
+      const logoBuffer = logoUrl ? await fetchImageAsArrayBuffer(logoUrl) : null;
       if (logoBuffer) {
         children.push(
           new Paragraph({

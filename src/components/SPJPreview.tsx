@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { getLogoSignedUrl } from "@/lib/storage-utils";
 
 type KopTemplate = {
   id: string;
@@ -56,6 +57,7 @@ const jenisBelanjaLabel: Record<string, string> = {
 
 export function SPJPreview({ kegiatan }: { kegiatan: Kegiatan }) {
   const [kop, setKop] = useState<KopTemplate | null>(null);
+  const [resolvedLogoUrl, setResolvedLogoUrl] = useState<string | null>(null);
 
   useEffect(() => {
     if (kegiatan.kop_template_id) {
@@ -64,8 +66,14 @@ export function SPJPreview({ kegiatan }: { kegiatan: Kegiatan }) {
         .select("*")
         .eq("id", kegiatan.kop_template_id)
         .single()
-        .then(({ data }) => {
-          if (data) setKop(data);
+        .then(async ({ data }) => {
+          if (data) {
+            setKop(data);
+            if (data.logo_url) {
+              const url = await getLogoSignedUrl(data.logo_url);
+              setResolvedLogoUrl(url);
+            }
+          }
         });
     }
   }, [kegiatan.kop_template_id]);
@@ -76,8 +84,8 @@ export function SPJPreview({ kegiatan }: { kegiatan: Kegiatan }) {
       {kop && (
         <div className="text-center border-b-2 border-foreground pb-4 space-y-1">
           <div className="flex items-center justify-center gap-4">
-            {kop.logo_url && (
-              <img src={kop.logo_url} alt="Logo" className="w-14 h-14 object-contain" />
+            {resolvedLogoUrl && (
+              <img src={resolvedLogoUrl} alt="Logo" className="w-14 h-14 object-contain" />
             )}
             <div>
               <h2 className="text-lg font-bold uppercase tracking-wider">{kop.nama_instansi}</h2>

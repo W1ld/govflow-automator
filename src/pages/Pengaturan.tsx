@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useAuth } from "@/contexts/AuthContext";
+import { getLogoSignedUrl } from "@/lib/storage-utils";
 import { AppLayout } from "@/components/AppLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -68,6 +69,7 @@ const emptyPejabat: Omit<PejabatTemplate, "id" | "is_active"> = {
 const Pengaturan = () => {
   const { user } = useAuth();
   const [kopList, setKopList] = useState<KopTemplate[]>([]);
+  const [logoUrls, setLogoUrls] = useState<Record<string, string>>({});
   const [pejabatList, setPejabatList] = useState<PejabatTemplate[]>([]);
   const [kopForm, setKopForm] = useState<KopFormData>(emptyKop);
   const [editKopId, setEditKopId] = useState<string | null>(null);
@@ -88,14 +90,23 @@ const Pengaturan = () => {
       supabase.from("kop_templates").select("*").order("created_at"),
       supabase.from("pejabat_templates").select("*").order("created_at"),
     ]);
-    if (kopRes.data) setKopList(kopRes.data);
+    if (kopRes.data) {
+      setKopList(kopRes.data);
+      // Resolve signed URLs for logos
+      const urls: Record<string, string> = {};
+      await Promise.all(
+        kopRes.data
+          .filter((k) => k.logo_url)
+          .map(async (k) => {
+            const url = await getLogoSignedUrl(k.logo_url!);
+            if (url) urls[k.id] = url;
+          })
+      );
+      setLogoUrls(urls);
+    }
     if (pejabatRes.data) setPejabatList(pejabatRes.data);
   };
 
-  const getLogoPublicUrl = (path: string) => {
-    const { data } = supabase.storage.from("kop-logos").getPublicUrl(path);
-    return data.publicUrl;
-  };
 
   // KOP CRUD
   const openKopCreate = () => {
@@ -121,7 +132,7 @@ const Pengaturan = () => {
       logoFile: null,
     });
     setEditKopId(kop.id);
-    setLogoPreview(kop.logo_url || null);
+    setLogoPreview(logoUrls[kop.id] || null);
     setKopDialogOpen(true);
   };
 
@@ -151,7 +162,8 @@ const Pengaturan = () => {
     const path = `${userId}/${kopId}/logo-${Date.now()}.${ext}`;
     const { error } = await supabase.storage.from("kop-logos").upload(path, file, { upsert: true });
     if (error) throw error;
-    return getLogoPublicUrl(path);
+    // Store the storage path, not a URL
+    return path;
   };
 
   const saveKop = async () => {
@@ -298,8 +310,8 @@ const Pengaturan = () => {
                 {kopList.map((kop) => (
                   <div key={kop.id} className="flex items-center justify-between p-3 border rounded-md bg-muted/20">
                     <div className="flex items-center gap-3">
-                      {kop.logo_url ? (
-                        <img src={kop.logo_url} alt="Logo" className="w-10 h-10 object-contain rounded" />
+                      {logoUrls[kop.id] ? (
+                        <img src={logoUrls[kop.id]} alt="Logo" className="w-10 h-10 object-contain rounded" />
                       ) : (
                         <div className="w-10 h-10 rounded bg-muted flex items-center justify-center">
                           <Image className="w-4 h-4 text-muted-foreground" />
