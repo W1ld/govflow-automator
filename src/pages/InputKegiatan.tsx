@@ -173,7 +173,8 @@ const InputKegiatan = () => {
 
     setLoading(false);
     if (error) {
-      toast.error("Gagal menyimpan: " + error.message);
+      console.error("[InputKegiatan] save error:", error);
+      toast.error("Gagal menyimpan. Silakan coba lagi.");
     } else {
       toast.success(isEdit ? "Kegiatan berhasil diperbarui" : "Kegiatan berhasil disimpan sebagai Draft");
       navigate("/spj");

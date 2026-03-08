@@ -95,7 +95,8 @@ const DaftarSPJ = () => {
 
     const { data: result, error } = await query;
     if (error) {
-      toast.error("Gagal memuat data: " + error.message);
+      console.error("[DaftarSPJ] fetch error:", error);
+      toast.error("Gagal memuat data. Silakan coba lagi.");
     } else {
       setData(result || []);
     }
@@ -109,7 +110,8 @@ const DaftarSPJ = () => {
   const updateStatus = async (id: string, newStatus: string) => {
     const { error } = await supabase.from("kegiatan").update({ status: newStatus }).eq("id", id);
     if (error) {
-      toast.error("Gagal update status: " + error.message);
+      console.error("[DaftarSPJ] update status error:", error);
+      toast.error("Gagal update status. Silakan coba lagi.");
     } else {
       toast.success(`Status diubah ke ${newStatus}`);
       fetchData();
@@ -120,7 +122,8 @@ const DaftarSPJ = () => {
     if (!confirm("Yakin ingin menghapus SPJ ini?")) return;
     const { error } = await supabase.from("kegiatan").delete().eq("id", id);
     if (error) {
-      toast.error("Gagal menghapus: " + error.message);
+      console.error("[DaftarSPJ] delete error:", error);
+      toast.error("Gagal menghapus. Silakan coba lagi.");
     } else {
       toast.success("SPJ berhasil dihapus");
       fetchData();
@@ -135,7 +138,8 @@ const DaftarSPJ = () => {
       status: "draft",
     } as any);
     if (error) {
-      toast.error("Gagal menduplikasi: " + error.message);
+      console.error("[DaftarSPJ] duplicate error:", error);
+      toast.error("Gagal menduplikasi. Silakan coba lagi.");
     } else {
       toast.success("SPJ berhasil diduplikasi sebagai Draft baru");
       fetchData();

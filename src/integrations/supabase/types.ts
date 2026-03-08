@@ -20,6 +20,7 @@ export type Database = {
           bendahara_nip: string | null
           catatan_revisi: string | null
           created_at: string
+          created_by: string
           id: string
           jenis_belanja: string
           kode_mak: string | null
@@ -49,6 +50,7 @@ export type Database = {
           bendahara_nip?: string | null
           catatan_revisi?: string | null
           created_at?: string
+          created_by?: string
           id?: string
           jenis_belanja: string
           kode_mak?: string | null
@@ -78,6 +80,7 @@ export type Database = {
           bendahara_nip?: string | null
           catatan_revisi?: string | null
           created_at?: string
+          created_by?: string
           id?: string
           jenis_belanja?: string
           kode_mak?: string | null
@@ -116,6 +119,7 @@ export type Database = {
         Row: {
           alamat: string | null
           created_at: string
+          created_by: string
           email: string | null
           fax: string | null
           id: string
@@ -133,6 +137,7 @@ export type Database = {
         Insert: {
           alamat?: string | null
           created_at?: string
+          created_by?: string
           email?: string | null
           fax?: string | null
           id?: string
@@ -150,6 +155,7 @@ export type Database = {
         Update: {
           alamat?: string | null
           created_at?: string
+          created_by?: string
           email?: string | null
           fax?: string | null
           id?: string
@@ -169,6 +175,7 @@ export type Database = {
       pejabat_templates: {
         Row: {
           created_at: string
+          created_by: string
           id: string
           is_active: boolean
           jabatan: string
@@ -179,6 +186,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          created_by?: string
           id?: string
           is_active?: boolean
           jabatan: string
@@ -189,6 +197,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          created_by?: string
           id?: string
           is_active?: boolean
           jabatan?: string

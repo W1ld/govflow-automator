@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { useAuth } from "@/contexts/AuthContext";
 import { AppLayout } from "@/components/AppLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -65,6 +66,7 @@ const emptyPejabat: Omit<PejabatTemplate, "id" | "is_active"> = {
 };
 
 const Pengaturan = () => {
+  const { user } = useAuth();
   const [kopList, setKopList] = useState<KopTemplate[]>([]);
   const [pejabatList, setPejabatList] = useState<PejabatTemplate[]>([]);
   const [kopForm, setKopForm] = useState<KopFormData>(emptyKop);
@@ -144,9 +146,9 @@ const Pengaturan = () => {
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
-  const uploadLogo = async (file: File, kopId: string): Promise<string> => {
+  const uploadLogo = async (file: File, kopId: string, userId: string): Promise<string> => {
     const ext = file.name.split(".").pop();
-    const path = `${kopId}/logo-${Date.now()}.${ext}`;
+    const path = `${userId}/${kopId}/logo-${Date.now()}.${ext}`;
     const { error } = await supabase.storage.from("kop-logos").upload(path, file, { upsert: true });
     if (error) throw error;
     return getLogoPublicUrl(path);
@@ -176,7 +178,7 @@ const Pengaturan = () => {
       if (editKopId) {
         // Handle logo upload for edit
         if (kopForm.logoFile) {
-          payload.logo_url = await uploadLogo(kopForm.logoFile, editKopId);
+          payload.logo_url = await uploadLogo(kopForm.logoFile, editKopId, user!.id);
         } else if (kopForm.logo_url === null) {
           payload.logo_url = null;
         }
@@ -189,13 +191,14 @@ const Pengaturan = () => {
         const { data, error } = await supabase.from("kop_templates").insert(payload as any).select("id").single();
         if (error) throw error;
         if (kopForm.logoFile && data) {
-          const logoUrl = await uploadLogo(kopForm.logoFile, data.id);
+          const logoUrl = await uploadLogo(kopForm.logoFile, data.id, user!.id);
           await supabase.from("kop_templates").update({ logo_url: logoUrl }).eq("id", data.id);
         }
         toast.success("Template KOP berhasil disimpan");
       }
     } catch (err: any) {
-      toast.error("Gagal simpan: " + err.message);
+      console.error("[Pengaturan] save kop error:", err);
+      toast.error("Gagal menyimpan. Silakan coba lagi.");
     }
 
     setSaving(false);
