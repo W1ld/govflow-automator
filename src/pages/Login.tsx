@@ -68,7 +68,7 @@ const Login = () => {
             <Shield className="w-8 h-8 text-primary-foreground" />
           </div>
           <h1 className="text-xl font-bold text-foreground">W-GovSPJ</h1>
-          <p className="text-xs text-muted-foreground mt-1">Government Accountability System</p>
+          <p className="text-xs text-muted-foreground mt-1">Win Government Accountability System</p>
         </div>
 
         <Card className="border shadow-sm">
